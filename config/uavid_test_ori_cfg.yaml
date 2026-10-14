@@ -1,0 +1,41 @@
+DATASET:
+  NAME: "uavid"
+  NUM_CLASSES: 8
+  DATAROOT: "/media/wcj/9C922B9C922B7A421/youyou/ReCLIP/data/uavid/"
+  SCALE: [1280, 1080]
+  RATIO_RANGE: [1.0, 1.0]
+  CROP_SIZE: [1280, 1080]
+  CAT_MAX_RATIO: 0.75
+  IMG_NORM_CFG:
+    MEAN: [123.675, 116.28, 103.53]
+    STD: [58.395, 57.12, 57.375]
+    RGB: True
+#    MEAN: [ 122.771, 116.746, 104.094 ]
+#    STD: [ 68.501, 66.632, 70.323 ]
+#    RGB: True
+  TEXT_WEIGHT: 'text/uavid_ViT16_clip_text.pth'
+  REDUCE_ZERO_LABEL: False
+  IGNORE_INDEX: 255
+
+MODEL:
+  USE_MULTISCALE: True
+  MULTISCALE_COMPRESS_DIM: 256
+  MULTISCALE_WARMUP_EPOCHS: 10
+  MULTISCALE_LR_MULTIPLIER: 0.1
+  MAX_SCALE: 0.4
+  USE_FASB: True
+  FASB_LOW_FREQ_THRESHOLD: 0.2
+  FASB_LR_MULTIPLIER: 1.0 
+  FEATURE_EXTRACTOR: 'vit'
+  TEXT_CHANNEL: 512
+  VISUAL_CHANNEL: 768
+  TRAINING: False
+
+TEST:
+  BATCH_SIZE: 1
+  ReCLIP_PD: 0.5
+
+SAVE_DIR: "/media/wcj/9C922B9C922B7A421/youyou/reclip/experiments/uavid_rectification/"
+EVAL_METRIC: "miou"
+LOAD_PATH: "/media/wcj/9C922B9C922B7A421/youyou/reclip/experiments/uavid_rectification/best_weight.pth"
+NUM_WORKERS: 4
