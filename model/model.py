@@ -8,7 +8,6 @@ import math
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# ==================== 多尺度融合 ====================
 class MultiScaleFusion(nn.Module):
     def __init__(self, embed_dim=768, compress_dim=256, num_scales=3, max_scale=0.5):
         super().__init__()
@@ -61,7 +60,6 @@ class MultiScaleFusion(nn.Module):
         return fused_feat
 
 
-# ==================== 频域感知空间偏差模块 (FASB) ====================
 class FASBModule(nn.Module):
     """
     频域感知空间偏差模块 (Frequency-Aware Spatial Bias)
@@ -72,28 +70,28 @@ class FASBModule(nn.Module):
         self.in_channels = in_channels
         self.cnum = cnum
         self.threshold = low_freq_threshold
-        # 低频分支：建模全局语义分布
+
         self.low_freq_branch = nn.Sequential(
             nn.Conv2d(in_channels, 256, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
             nn.Conv2d(256, 128, kernel_size=1)
         )
-        # 高频分支：建模边界、细节、纹理
+
         self.high_freq_branch = nn.Sequential(
             nn.Conv2d(in_channels, 256, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
             nn.Conv2d(256, 128, kernel_size=1)
         )
-        # 融合投影层生成 Mp
+
         self.fusion_proj = nn.Sequential(
             nn.Conv2d(256, 128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
             nn.Conv2d(128, cnum, kernel_size=1)
         )
-        # 可学习融合因子
+
         self.fusion_alpha = nn.Parameter(torch.ones(1) * 0.5)
         self._init_weights()
     def _init_weights(self):
@@ -104,41 +102,24 @@ class FASBModule(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
     def forward(self, x):
-        """
-        Args:
-            x: 内容特征 [B, C, H, W] (ViT 最后一层 patch features)
-        Returns:
-            Mp: 内容依赖空间偏差 [B, cnum, H, W]
-        """
         B, C, H, W = x.shape
-        # 2D 快速傅里叶变换
         x_fft = torch.fft.fft2(x, norm='ortho')
         x_fft_shifted = torch.fft.fftshift(x_fft)
-
-        # 创建频域掩码
         mask = torch.zeros((B, C, H, W), device=x.device)
         center_h, center_w = H // 2, W // 2
         radius = max(int(min(H, W) * self.threshold), 1)
-
-        # 低频区域掩码 (中心圆)
         y = torch.arange(H, dtype=torch.float32, device=x.device).view(-1, 1)
         x_idx = torch.arange(W, dtype=torch.float32, device=x.device).view(1, -1)
         dist_from_center = torch.sqrt((y - center_h) ** 2 + (x_idx - center_w) ** 2)
         mask[:, :, dist_from_center <= radius] = 1.0
-
-        # 频率分解
         low_fft = x_fft_shifted * mask
         high_fft = x_fft_shifted * (1.0 - mask)
-
-        # 逆变换回到空间域
         low_feat = torch.fft.ifft2(torch.fft.ifftshift(low_fft), norm='ortho').real
         high_feat = torch.fft.ifft2(torch.fft.ifftshift(high_fft), norm='ortho').real
 
-        # 分支提取
         f_l = self.low_freq_branch(low_feat)
         f_h = self.high_freq_branch(high_feat)
 
-        # 融合生成最终偏差 Mp
         alpha = torch.sigmoid(self.fusion_alpha)
         combined = torch.cat([f_l * alpha, f_h * (1 - alpha)], dim=1)
         mp = self.fusion_proj(combined)
@@ -240,11 +221,6 @@ class Transformer(nn.Module):
         self.resblocks = nn.Sequential(*self.resblock)
 
     def forward(self, x: torch.Tensor):
-        """
-        Returns:
-            如果extract_multiscale=True: (z, q, k, v, [f3, f6, f9, f12])
-            否则: (z, q, k, v)
-        """
         intermediate_feats = []
 
         for i, block in enumerate(self.resblocks):
@@ -252,11 +228,9 @@ class Transformer(nn.Module):
                 # 最后一层 (Block 12)
                 z, q, k, v = block(x)
                 if self.extract_multiscale:
-                    # ！！！提取 Block 12 的输出 v ！！！
                     intermediate_feats.append(v.clone())
             else:
                 x = block(x)
-                # 记录第 3, 6, 9 层的输出 (索引 2, 5, 8)
                 if self.extract_multiscale and i in [2, 5, 8]:
                     intermediate_feats.append(x.clone())
 
@@ -293,11 +267,9 @@ class VisionTransformer(nn.Module):
         self.ln_post = nn.LayerNorm(width)
         self.proj = clip_model.visual.proj.to(torch.float32)
 
-        # 使用支持多尺度的Transformer
         self.transformer = Transformer(clip_model, width, layers, heads,
                                        extract_multiscale=use_multiscale)
 
-        # 多尺度融合模块
         if use_multiscale:
             self.multiscale_fusion = MultiScaleFusion(embed_dim=width, compress_dim=256, max_scale=max_scale)
 
@@ -306,7 +278,7 @@ class VisionTransformer(nn.Module):
     def forward(self, x, train=False, img_metas=None):
         B = x.shape[0]
 
-        # PatchEmbed + Padding（保持原样）
+        # PatchEmbed + Padding
         input_h, input_w = x.size()[-2:]
         kernel_h, kernel_w = (self.patch_size, self.patch_size)
         stride_h, stride_w = (self.patch_size, self.patch_size)
@@ -346,7 +318,6 @@ class VisionTransformer(nn.Module):
         if self.use_multiscale:
             z, q, k, v, intermediate_feats = self.transformer(x)
 
-            # 多尺度融合
             f3 = self.ln_post(intermediate_feats[0])
             f6 = self.ln_post(intermediate_feats[1])
             f9 = self.ln_post(intermediate_feats[2])
@@ -356,15 +327,14 @@ class VisionTransformer(nn.Module):
 
         else:
             z, q, k, v = self.transformer(x)
-            v = self.ln_post(v)  # 原始分支也必须过 LN
+            v = self.ln_post(v)
             v_fused = v[:, 1:].permute(0, 2, 1).reshape(B, -1, output_h, output_w)
 
-        # 后续处理（保持原样）
+        # 后续处理
         z = self.ln_post(z)
         cls_token = z[:, 0]
         z_global = cls_token @ self.proj if self.proj is not None else None
 
-        # 返回格式与原始一致
         return [v_fused, (output_h, output_w), z_global, k,
                 positional_embedding[:, 1:, :]]
 
@@ -378,7 +348,6 @@ class VisionTransformer(nn.Module):
         for p in self.parameters():
             p.requires_grad = False
 
-        # 多尺度模块设为可学习
         if self.use_multiscale:
             for p in self.multiscale_fusion.parameters():
                 p.requires_grad = True
@@ -424,7 +393,6 @@ class TextEncoder(nn.Module):
         x = x[torch.arange(x.shape[0]), 74 + cls_name_token.argmax(dim=-1)] @ self.text_projection
         return x
 
-# ==================== 第三步： ReCLIP 类 ====================
 class ReCLIP(nn.Module):
     def __init__(self, cfg, clip_model, rank, zeroshot_weights,
                  use_multiscale=False, compress_dim=256, max_scale=0.5):
@@ -461,11 +429,9 @@ class ReCLIP(nn.Module):
                                           low_freq_threshold=fasb_threshold).to(self.device)
         for p in self.parameters():
             p.requires_grad = False
-        # 多尺度模块
         if use_multiscale:
             for p in self.vit.multiscale_fusion.parameters():
                 p.requires_grad = True
-        # FASB模块
         if self.use_fasb:
             for p in self.fasb_module.parameters():
                 p.requires_grad = True
@@ -482,8 +448,6 @@ class ReCLIP(nn.Module):
         batch_size = image.shape[0]
         image = image.to(device)
 
-        # 1. 提取视觉特征 (v 为多尺度融合后的特征)
-        # v: [B, 768, H, W], shape: (H, W), positional_embedding不再用于偏差建模
         v_fused, shape, z_global, k, _ = self.vit(image, train=False, img_metas=img_metas)
 
         feat = self.proj(v_fused)  # [B, 512, H, W]
@@ -491,11 +455,8 @@ class ReCLIP(nn.Module):
 
         logit_scale = self.logit_scale.exp()
 
-        # 2. 计算文本相似度 output_q
         output_q = F.conv2d(feat, gt_cls_text_embeddings[:, :, None, None]).permute(0, 2, 3, 1).reshape(batch_size, -1,
                                                                                                         cnum)
-
-        # 3. 计算参考提示相似度 output_r
         prompt = self.text_encoder(cls_name_token)
         prompt = prompt / prompt.norm()
         output_r = F.conv2d(feat, prompt[:, :, None, None]).permute(0, 2, 3, 1).reshape(batch_size, -1, cnum)
