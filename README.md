@@ -9,3 +9,33 @@ The transfer of vision-language models (VLMs) such as CLIP to unsupervised seman
 
 📝 Dataset storage format:
 
+ReCLIP
+├── data
+│   ├── Potsdam
+│   │   ├── img_dir
+│   │   │   ├── train
+│   │   │   ├── val
+│   │   ├── ann_dir
+│   │   │   ├── train
+│   │   │   ├── val
+│   ├── Vaihingen
+│   │   ├── img_dir
+│   │   │   ├── train
+│   │   │   ├── val
+│   │   ├── ann_dir
+│   │   │   ├── train
+│   │   │   ├── val
+│   ├── UAVid
+│   │   ├── img_dir
+│   │   │   ├── train
+│   │   │   ├── val
+│   │   ├── ann_dir
+│   │   │   ├── train
+│   │   │   ├── val
+│   ├── UDD5
+│   │   ├── img_dir
+│   │   │   ├── train
+│   │   │   ├── val
+│   │   ├── ann_dir
+│   │   │   ├── train
+│   │   │   ├── val
