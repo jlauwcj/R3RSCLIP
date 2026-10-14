@@ -5,10 +5,10 @@
 
 💡 Abstract:
 
-The transfer of vision-language models (VLMs) such as CLIP to unsupervised semantic segmentation (USS) of high-resolution remote sensing images (HRRSIs) is severely hampered by a pronounced domain gap. This paper argues that the gap can be decomposed into three structured biases rooted in the physics of remote sensing (RS) imaging. Building on this, we propose R3RSCLIP, a unified framework that rectifies the three biases in a complementary manner. Extensive experiments on four benchmarks demonstrate that R3RSCLIP achieves state-of-the-art performance on the ISPRS orthophoto benchmarks, reaching 38.40% and 30.24% mIoU on Potsdam and Vaihingen, respectively, and remains competitive on the oblique-view UAVid (31.18%) and the complex urban UDD5 (37.30%), confirming its robustness across sensors, resolutions, and viewing geometries.
+<pre>**The transfer of vision-language models (VLMs) such as CLIP to unsupervised semantic segmentation (USS) of high-resolution remote sensing images (HRRSIs) is severely hampered by a pronounced domain gap. This paper argues that the gap can be decomposed into three structured biases rooted in the physics of remote sensing (RS) imaging. Building on this, we propose R3RSCLIP, a unified framework that rectifies the three biases in a complementary manner. Extensive experiments on four benchmarks demonstrate that R3RSCLIP achieves state-of-the-art performance on the ISPRS orthophoto benchmarks, reaching 38.40% and 30.24% mIoU on Potsdam and Vaihingen, respectively, and remains competitive on the oblique-view UAVid (31.18%) and the complex urban UDD5 (37.30%), confirming its robustness across sensors, resolutions, and viewing geometries.**</pre>
 
 📝 Dataset storage format:
-<pre> ```
+<pre> 
 ReCLIP
 ├── data
 │   ├── Potsdam
@@ -39,4 +39,4 @@ ReCLIP
 │   │   ├── ann_dir
 │   │   │   ├── train
 │   │   │   ├── val
-``` </pre>
+</pre>
