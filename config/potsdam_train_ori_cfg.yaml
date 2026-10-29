@@ -1,7 +1,7 @@
 DATASET:
   NAME: 'potsdam'
   NUM_CLASSES: 6
-  DATAROOT: '/media/wcj/9C922B9C922B7A421/youyou/ReCLIP/data/potsdam/'
+  DATAROOT: '...'
   SCALE: [448, 448]
   RATIO_RANGE: [1.0, 1.0]
   CROP_SIZE: [448, 448]
@@ -44,6 +44,6 @@ TEST:
   BATCH_SIZE: 1
 
 EVAL_METRIC: "miou"
-LOAD_PATH: "/media/wcj/9C922B9C922B7A421/youyou/reclip/experiments/potsdam_rectification/best_weight.pth"
-SAVE_DIR: "/media/wcj/9C922B9C922B7A421/youyou/reclip/experiments/potsdam_rectification/"
+LOAD_PATH: "..."
+SAVE_DIR: "..."
 NUM_WORKERS: 4
