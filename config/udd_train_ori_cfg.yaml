@@ -1,7 +1,7 @@
 DATASET:
   NAME: "udd"
   NUM_CLASSES: 5
-  DATAROOT: "/media/wcj/9C922B9C922B7A421/youyou/ReCLIP/data/udd/"
+  DATAROOT: "..."
   SCALE: [1280, 1080]
   RATIO_RANGE: [1.0, 1.0]
   CROP_SIZE: [1280, 1080]
@@ -38,6 +38,6 @@ MODEL:
   TRAINING: True
 
 EVAL_METRIC: "miou"
-SAVE_DIR: "/media/wcj/9C922B9C922B7A421/youyou/reclip/experiments/udd_rectification/"
-LOAD_PATH: "/media/wcj/9C922B9C922B7A421/youyou/reclip/experiments/udd_rectification/best_weight.pth"
+SAVE_DIR: "..."
+LOAD_PATH: "..."
 NUM_WORKERS: 4
