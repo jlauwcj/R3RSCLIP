@@ -16,10 +16,10 @@ def intersect_and_union(pred_label_path,
                         ignore_index,
                         label_map=dict(),
                         reduce_zero_label=False):
-    # 强制加载到 CPU
+
     pred_label = torch.load(pred_label_path, map_location='cpu')
     
-    # 如果保存的是 numpy 数组，转换为 tensor
+
     if isinstance(pred_label, np.ndarray):
         pred_label = torch.from_numpy(pred_label)
         
@@ -41,10 +41,8 @@ def intersect_and_union(pred_label_path,
     pred_label = pred_label[mask].to(device)
     label = label[mask].to(device)
 
-    # 计算交集
     intersect = pred_label[pred_label == label]
     
-    # 全部在 CPU 上进行直方图统计
     area_intersect = torch.histc(
         intersect.float(), bins=(num_classes), min=0, max=num_classes - 1)
     area_pred_label = torch.histc(
@@ -82,7 +80,7 @@ def total_intersect_and_union(results,
         total_area_label += area_label
         
         img_id += 1
-        if img_id % 50 == 0: # 减少打印频率
+        if img_id % 50 == 0:
             print(f'Evaluated {img_id} images...')
             
     return total_area_intersect, total_area_union, total_area_pred_label, \
@@ -120,7 +118,6 @@ def total_area_to_metrics(total_area_intersect,
             ret_metrics['Dice'] = dice
             ret_metrics['Acc'] = acc
 
-    # 转换为 numpy
     ret_metrics = {
         metric: value.numpy()
         for metric, value in ret_metrics.items()
