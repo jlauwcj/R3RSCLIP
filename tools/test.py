@@ -6,14 +6,12 @@ import numpy as np
 from PIL import Image
 import time
 from thop import profile
-# --------------------
 import sys
 import os
-# 添加
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent.resolve()
-sys.path.append(str(project_root))  # 添加根目录到Python路径
+sys.path.append(str(project_root))
 
 from config.configs import cfg_from_file
 from model.model import ReCLIP
@@ -29,11 +27,9 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
-                        # ---------------------数据集
                         default='config/Potsdam_test_ori_cfg.yaml', type=str)
     parser.add_argument('--model', dest='model_name',
                         help='model name',
-                        # --------------------模型
                         default='ReCLIP', type=str)
     args = parser.parse_args()
     return args
@@ -54,20 +50,17 @@ def test():
                        use_multiscale=cfg.MODEL.get('USE_MULTISCALE', False),
                        compress_dim=cfg.MODEL.get('MULTISCALE_COMPRESS_DIM', 256),
                        max_scale=cfg.MODEL.get('MAX_SCALE', 0.5))
-    # 修改权重加载逻辑
     checkpoint = torch.load(cfg.LOAD_PATH, map_location=device)
     new_weight = {}
 
-    # 处理 DDP 前缀
     for key, value in checkpoint.items():
         new_key = key[7:] if key.startswith('module.') else key
 
-        # 核心修改：跳过已经不存在的 proj_net 权重
         if 'proj_net' in new_key:
             print(f"[SKIP] Skipping old weight key: {new_key}")
             continue
         new_weight[new_key] = value
-    # 加载权重，fasb_module 是全新的，没有预训练权重：strict=False
+
     msg = model.load_state_dict(new_weight, strict=False)
     print(f"[INFO] Load Weight Status: {msg}")
     model = model.to(device)
@@ -89,7 +82,6 @@ def test():
     print(f"计算复杂度 (FLOPs): {flops / 1e9:.2f} G")
     # 计算推理速度 (FPS)
     iterations = 50
-    # 预热 GPU
     for _ in range(10):
         _ = model.vit(dummy_input)
 
