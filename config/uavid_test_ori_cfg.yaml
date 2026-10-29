@@ -1,7 +1,7 @@
 DATASET:
   NAME: "uavid"
   NUM_CLASSES: 8
-  DATAROOT: "/media/wcj/9C922B9C922B7A421/youyou/ReCLIP/data/uavid/"
+  DATAROOT: "..."
   SCALE: [1280, 1080]
   RATIO_RANGE: [1.0, 1.0]
   CROP_SIZE: [1280, 1080]
@@ -35,7 +35,7 @@ TEST:
   BATCH_SIZE: 1
   ReCLIP_PD: 0.5
 
-SAVE_DIR: "/media/wcj/9C922B9C922B7A421/youyou/reclip/experiments/uavid_rectification/"
+SAVE_DIR: "..."
 EVAL_METRIC: "miou"
-LOAD_PATH: "/media/wcj/9C922B9C922B7A421/youyou/reclip/experiments/uavid_rectification/best_weight.pth"
+LOAD_PATH: "..."
 NUM_WORKERS: 4
