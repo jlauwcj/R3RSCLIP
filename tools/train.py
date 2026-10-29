@@ -18,7 +18,6 @@ from pathlib import Path
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-# 将根目录添加到Python路径
 project_root = Path(__file__).parent.parent.resolve()
 sys.path.append(str(project_root))
 
@@ -28,9 +27,7 @@ from utils.test_mIoU import mean_iou
 from utils.preprocess import val_preprocess, preprocess, read_file_list, prepare_dataset_cls_tokens
 
 def setup_optimizer_with_multiscale(model, cfg):
-    """
-    为多尺度融合模块和 FASB 模块设置独立的学习率
-    """
+
     multiscale_params = []
     fasb_params = []
     other_params = []
@@ -213,7 +210,6 @@ def train(rank, world_size):
         train_sampler.set_epoch(epoch)
         running_loss = 0.0
 
-        # 更新学习率，注意传入 cfg 以获取倍率
         lr = adjust_learning_rate_poly(optimizer, epoch, max_epoch, cfg.TRAIN.LR, 0.9, cfg)
 
         loop = tqdm(train_loader)
@@ -256,7 +252,6 @@ def train(rank, world_size):
                     label_ori = Image.open(val_labels[v_idx])
                     ori_shape = (label_ori.size[1], label_ori.size[0])
 
-                    # 动态生成 gt_cls 用于推理
                     gt_cls_val = list(set(np.asarray(label_ori).flatten()) - {255})
 
                     output = model(img_val, gt_cls_val, text_weight, cls_name_token, training=False)
@@ -297,7 +292,6 @@ def train(rank, world_size):
     if log is not None:
         log.close()
 
-
 if __name__ == '__main__':
-    world_size = 1  # 根据 GPU 数量调整
+    world_size = 1
     mp.spawn(train, args=(world_size,), nprocs=world_size, join=True)
